@@ -1,0 +1,84 @@
+{
+  "doc-db2ccba66e5b8a01b65daa39671d952e": {
+    "content": "This is public information about the city of Paris. The Eiffel Tower is a famous landmark.",
+    "file_path": null,
+    "create_time": 1761083549,
+    "update_time": 1761083549,
+    "_id": "doc-db2ccba66e5b8a01b65daa39671d952e"
+  },
+  "doc-926053aa9931756039805049f0671640": {
+    "content": "This is confidential information about Project Alpha. The budget is 5 million dollars.",
+    "file_path": null,
+    "create_time": 1761083549,
+    "update_time": 1761083549,
+    "_id": "doc-926053aa9931756039805049f0671640"
+  },
+  "doc-7507c7ed77d38b385a7f1592013340d3": {
+    "content": "This is top secret information about Operation Nightfall. The launch is scheduled for midnight.",
+    "file_path": null,
+    "create_time": 1761083550,
+    "update_time": 1761083550,
+    "_id": "doc-7507c7ed77d38b385a7f1592013340d3"
+  },
+  "doc-a09d79778439f8a2235a3d9d44b8f9be": {
+    "content": "This is public information about the city of Paris. The Eiffel Tower is a famous landmark. Public data is freely available.",
+    "file_path": null,
+    "create_time": 1761083751,
+    "update_time": 1761083751,
+    "_id": "doc-a09d79778439f8a2235a3d9d44b8f9be"
+  },
+  "doc-1a097c519908312a37554e1fa6c0cdef": {
+    "content": "This is confidential information about Project Alpha. The budget is 5 million dollars. Confidential data requires clearance.",
+    "file_path": null,
+    "create_time": 1761083751,
+    "update_time": 1761083751,
+    "_id": "doc-1a097c519908312a37554e1fa6c0cdef"
+  },
+  "doc-e7f8b440eacff062771a6cbb81d7bac2": {
+    "content": "This is top secret information about Operation Nightfall. The launch is scheduled for midnight. Top secret data is highly restricted.",
+    "file_path": null,
+    "create_time": 1761083751,
+    "update_time": 1761083751,
+    "_id": "doc-e7f8b440eacff062771a6cbb81d7bac2"
+  },
+  "doc-1fea8400879a5bdb9ccdc99ba3927949": {
+    "content": "This is a test document from the DOCT service about administrative procedures.",
+    "file_path": "test_doct_doc.txt",
+    "accreditation_level": 0,
+    "create_time": 1761086428,
+    "update_time": 1761086428,
+    "_id": "doc-1fea8400879a5bdb9ccdc99ba3927949"
+  },
+  "doc-44a8aaf164fa32791074178fe55cdece": {
+    "content": "This is a test document without a service specified.",
+    "file_path": "test_no_service.txt",
+    "accreditation_level": 0,
+    "create_time": 1761086428,
+    "update_time": 1761086428,
+    "_id": "doc-44a8aaf164fa32791074178fe55cdece"
+  },
+  "doc-6fdf74664bd020962049208bd155c7cf": {
+    "content": "Document from CABINET office about strategic decisions.",
+    "file_path": "cabinet_doc.txt",
+    "accreditation_level": 0,
+    "create_time": 1761086428,
+    "update_time": 1761086428,
+    "_id": "doc-6fdf74664bd020962049208bd155c7cf"
+  },
+  "doc-b1896eebd2f16de313e4ad12651aa42c": {
+    "content": "Document from DAF service about financial procedures.",
+    "file_path": "daf_doc.txt",
+    "accreditation_level": 0,
+    "create_time": 1761086428,
+    "update_time": 1761086428,
+    "_id": "doc-b1896eebd2f16de313e4ad12651aa42c"
+  },
+  "doc-d28bc7df00d300704928079180f1546d": {
+    "content": "Document from DRI service about research initiatives.",
+    "file_path": "dri_doc.txt",
+    "accreditation_level": 0,
+    "create_time": 1761086428,
+    "update_time": 1761086428,
+    "_id": "doc-d28bc7df00d300704928079180f1546d"
+  }
+}

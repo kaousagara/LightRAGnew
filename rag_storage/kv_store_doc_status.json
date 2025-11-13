@@ -1,0 +1,152 @@
+{
+  "doc-db2ccba66e5b8a01b65daa39671d952e": {
+    "status": "failed",
+    "error_msg": "RetryError[<Future at 0x7f08183a02b0 state=finished raised APIConnectionError>]",
+    "content_summary": "This is public information about the city of Paris. The Eiffel Tower is a famous landmark.",
+    "content_length": 90,
+    "created_at": "2025-10-21T21:52:29.417087+00:00",
+    "updated_at": "2025-10-21T21:56:27.899357+00:00",
+    "file_path": null,
+    "track_id": "insert_20251021_215229_e93eb967",
+    "metadata": {
+      "processing_start_time": 1761083775,
+      "processing_end_time": 1761083787
+    },
+    "chunks_list": []
+  },
+  "doc-926053aa9931756039805049f0671640": {
+    "status": "failed",
+    "error_msg": "RetryError[<Future at 0x7f0818c4ae90 state=finished raised APIConnectionError>]",
+    "content_summary": "This is confidential information about Project Alpha. The budget is 5 million dollars.",
+    "content_length": 86,
+    "created_at": "2025-10-21T21:52:29.459837+00:00",
+    "updated_at": "2025-10-21T21:56:27.787369+00:00",
+    "file_path": null,
+    "track_id": "insert_20251021_215229_0f4f23c8",
+    "metadata": {
+      "processing_start_time": 1761083775,
+      "processing_end_time": 1761083787
+    },
+    "chunks_list": []
+  },
+  "doc-7507c7ed77d38b385a7f1592013340d3": {
+    "status": "failed",
+    "error_msg": "RetryError[<Future at 0x7f081828bc10 state=finished raised APIConnectionError>]",
+    "content_summary": "This is top secret information about Operation Nightfall. The launch is scheduled for midnight.",
+    "content_length": 95,
+    "created_at": "2025-10-21T21:52:30.263066+00:00",
+    "updated_at": "2025-10-21T21:56:39.652667+00:00",
+    "file_path": null,
+    "track_id": "insert_20251021_215230_775b143b",
+    "metadata": {
+      "processing_start_time": 1761083787,
+      "processing_end_time": 1761083799
+    },
+    "chunks_list": []
+  },
+  "doc-a09d79778439f8a2235a3d9d44b8f9be": {
+    "status": "failed",
+    "error_msg": "RetryError[<Future at 0x7f081828b820 state=finished raised APIConnectionError>]",
+    "content_summary": "This is public information about the city of Paris. The Eiffel Tower is a famous landmark. Public data is freely available.",
+    "content_length": 123,
+    "created_at": "2025-10-21T21:55:51.564265+00:00",
+    "updated_at": "2025-10-21T21:56:39.850997+00:00",
+    "file_path": null,
+    "track_id": "insert_20251021_215551_a9e99826",
+    "metadata": {
+      "processing_start_time": 1761083787,
+      "processing_end_time": 1761083799
+    },
+    "chunks_list": []
+  },
+  "doc-1a097c519908312a37554e1fa6c0cdef": {
+    "status": "failed",
+    "error_msg": "RetryError[<Future at 0x7f081828a8c0 state=finished raised APIConnectionError>]",
+    "content_summary": "This is confidential information about Project Alpha. The budget is 5 million dollars. Confidential data requires clearance.",
+    "content_length": 124,
+    "created_at": "2025-10-21T21:55:51.621468+00:00",
+    "updated_at": "2025-10-21T21:56:51.694161+00:00",
+    "file_path": null,
+    "track_id": "insert_20251021_215551_996bddc9",
+    "metadata": {
+      "processing_start_time": 1761083799,
+      "processing_end_time": 1761083811
+    },
+    "chunks_list": []
+  },
+  "doc-e7f8b440eacff062771a6cbb81d7bac2": {
+    "status": "failed",
+    "error_msg": "RetryError[<Future at 0x7f08182897e0 state=finished raised APIConnectionError>]",
+    "content_summary": "This is top secret information about Operation Nightfall. The launch is scheduled for midnight. Top secret data is highly restricted.",
+    "content_length": 133,
+    "created_at": "2025-10-21T21:55:51.658141+00:00",
+    "updated_at": "2025-10-21T21:56:51.981424+00:00",
+    "file_path": null,
+    "track_id": "insert_20251021_215551_f8fef878",
+    "metadata": {
+      "processing_start_time": 1761083799,
+      "processing_end_time": 1761083811
+    },
+    "chunks_list": []
+  },
+  "doc-1fea8400879a5bdb9ccdc99ba3927949": {
+    "status": "pending",
+    "content_summary": "This is a test document from the DOCT service about administrative procedures.",
+    "content_length": 78,
+    "created_at": "2025-10-21T22:40:28.174327+00:00",
+    "updated_at": "2025-10-21T22:40:28.174340+00:00",
+    "file_path": "test_doct_doc.txt",
+    "track_id": "insert_20251021_224028_e6ec35d8",
+    "accreditation_level": 0,
+    "service": "DOCT",
+    "chunks_list": []
+  },
+  "doc-44a8aaf164fa32791074178fe55cdece": {
+    "status": "pending",
+    "content_summary": "This is a test document without a service specified.",
+    "content_length": 52,
+    "created_at": "2025-10-21T22:40:28.213684+00:00",
+    "updated_at": "2025-10-21T22:40:28.213696+00:00",
+    "file_path": "test_no_service.txt",
+    "track_id": "insert_20251021_224028_ebaec6e9",
+    "accreditation_level": 0,
+    "service": null,
+    "chunks_list": []
+  },
+  "doc-6fdf74664bd020962049208bd155c7cf": {
+    "status": "pending",
+    "content_summary": "Document from CABINET office about strategic decisions.",
+    "content_length": 55,
+    "created_at": "2025-10-21T22:40:28.224290+00:00",
+    "updated_at": "2025-10-21T22:40:28.224294+00:00",
+    "file_path": "cabinet_doc.txt",
+    "track_id": "insert_20251021_224028_a45bd191",
+    "accreditation_level": 0,
+    "service": "CABINET",
+    "chunks_list": []
+  },
+  "doc-b1896eebd2f16de313e4ad12651aa42c": {
+    "status": "pending",
+    "content_summary": "Document from DAF service about financial procedures.",
+    "content_length": 53,
+    "created_at": "2025-10-21T22:40:28.224280+00:00",
+    "updated_at": "2025-10-21T22:40:28.224285+00:00",
+    "file_path": "daf_doc.txt",
+    "track_id": "insert_20251021_224028_a45bd191",
+    "accreditation_level": 0,
+    "service": "DAF",
+    "chunks_list": []
+  },
+  "doc-d28bc7df00d300704928079180f1546d": {
+    "status": "pending",
+    "content_summary": "Document from DRI service about research initiatives.",
+    "content_length": 53,
+    "created_at": "2025-10-21T22:40:28.224255+00:00",
+    "updated_at": "2025-10-21T22:40:28.224267+00:00",
+    "file_path": "dri_doc.txt",
+    "track_id": "insert_20251021_224028_a45bd191",
+    "accreditation_level": 0,
+    "service": "DRI",
+    "chunks_list": []
+  }
+}
