@@ -29,8 +29,6 @@ Requires-Dist: pipmaster
 Requires-Dist: pydantic
 Requires-Dist: pypinyin
 Requires-Dist: python-dotenv
-Requires-Dist: raganything>=1.2.8
-Requires-Dist: requests>=2.32.5
 Requires-Dist: setuptools
 Requires-Dist: tenacity
 Requires-Dist: tiktoken

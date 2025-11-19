@@ -1,6 +1,8 @@
 import os
 import time
-from dataclasses import dataclass, field
+import contextlib
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone
 import numpy as np
 import configparser
 import asyncio
@@ -189,12 +191,23 @@ async def ensure_index_exists(
             "properties": {
                 "file_path": {"type": "keyword"},
                 "status": {"type": "keyword"},
+                "content_summary": {"type": "text", "index": False},
+                "content_length": {"type": "integer"},
+                "track_id": {"type": "keyword"},
+                "chunks_count": {"type": "integer"},
+                "chunks_list": {"type": "keyword"},
                 "metadata": {"type": "object", "enabled": True},
                 "error_msg": {"type": "text"},
                 "accreditation_level": {"type": "integer"},
                 "service": {"type": "keyword"},
-                "create_time": {"type": "long"},
-                "update_time": {"type": "long"},
+                "created_at": {
+                    "type": "date",
+                    "format": "strict_date_optional_time_nanos",
+                },
+                "updated_at": {
+                    "type": "date",
+                    "format": "strict_date_optional_time_nanos",
+                },
             }
         }
     
@@ -472,22 +485,135 @@ class ElasticsearchDocStatusStorage(DocStatusStorage):
         """Normalize a raw Elasticsearch document to DocProcessingStatus-compatible dict"""
         data = doc.copy()
         data.pop("_id", None)
-        
+
         if "file_path" not in data:
             data["file_path"] = "no-file-path"
         if "metadata" not in data:
             data["metadata"] = {}
         if "error_msg" not in data:
             data["error_msg"] = None
-        
+        if "chunks_list" not in data or data["chunks_list"] is None:
+            data["chunks_list"] = []
+        if "content_summary" not in data:
+            data["content_summary"] = ""
+        if "content_length" not in data:
+            data["content_length"] = 0
+        if "created_at" not in data:
+            data["created_at"] = datetime.now(timezone.utc).isoformat()
+        if "updated_at" not in data:
+            data["updated_at"] = data["created_at"]
+        status = data.get("status")
+        if isinstance(status, DocStatus):
+            data["status"] = status.value
+
+        # Remove internal helper fields that are not part of DocProcessingStatus
+        data.pop("create_time", None)
+        data.pop("update_time", None)
+        data.pop("messages", None)
+        data.pop("return_message", None)
+
         # Backward compatibility: migrate legacy 'error' field
         if "error" in data:
             if "error_msg" not in data or data["error_msg"] in (None, ""):
                 data["error_msg"] = data.pop("error")
             else:
                 data.pop("error", None)
-        
+
         return data
+
+    def _normalize_doc_status_input(
+        self,
+        value: DocProcessingStatus | dict[str, Any],
+    ) -> dict[str, Any]:
+        """Prepare input data so it can be written to Elasticsearch safely."""
+
+        if isinstance(value, DocProcessingStatus):
+            data = asdict(value)
+        else:
+            data = dict(value)
+
+        # Remove heavy fields that shouldn't be stored here
+        data.pop("content", None)
+
+        status = data.get("status")
+        if isinstance(status, DocStatus):
+            data["status"] = status.value
+
+        if "chunks_list" not in data or data["chunks_list"] is None:
+            data["chunks_list"] = []
+        if "metadata" not in data or data["metadata"] is None:
+            data["metadata"] = {}
+        if "error_msg" not in data:
+            data["error_msg"] = None
+        if "content_summary" not in data:
+            data["content_summary"] = ""
+        if "content_length" not in data:
+            data["content_length"] = 0
+        if not data.get("file_path"):
+            data["file_path"] = "no-file-path"
+
+        # Ensure timestamps exist so downstream APIs can rely on them
+        now_iso = datetime.now(timezone.utc).isoformat()
+        if "created_at" not in data or not data["created_at"]:
+            data["created_at"] = now_iso
+        if "updated_at" not in data or not data["updated_at"]:
+            data["updated_at"] = data["created_at"]
+
+        return data
+
+    def _build_processing_status(
+        self, source: dict[str, Any]
+    ) -> DocProcessingStatus | None:
+        data = self._prepare_doc_status_data(source)
+        try:
+            return DocProcessingStatus(**data)
+        except (TypeError, KeyError) as exc:
+            logger.error(
+                f"[{self.workspace}] Error constructing DocProcessingStatus: {exc}"
+            )
+            return None
+
+    async def _scroll_hits(
+        self, query: dict[str, Any], batch_size: int = 1000
+    ) -> list[dict[str, Any]]:
+        """Retrieve all hits for the supplied query using the scroll API."""
+
+        documents: list[dict[str, Any]] = []
+        scroll_id: str | None = None
+
+        try:
+            response = await self.es_client.search(
+                index=self._index_name,
+                body={"query": query},
+                scroll="2m",
+                size=batch_size,
+            )
+            scroll_id = response.get("_scroll_id")
+
+            while True:
+                hits = response.get("hits", {}).get("hits", [])
+                if not hits:
+                    break
+                documents.extend(hits)
+
+                if not scroll_id:
+                    break
+
+                response = await self.es_client.scroll(
+                    scroll_id=scroll_id, scroll="2m"
+                )
+                scroll_id = response.get("_scroll_id")
+
+            if scroll_id:
+                await self.es_client.clear_scroll(scroll_id=scroll_id)
+
+        except Exception as exc:
+            logger.error(f"[{self.workspace}] Error during scroll query: {exc}")
+            if scroll_id:
+                with contextlib.suppress(Exception):
+                    await self.es_client.clear_scroll(scroll_id=scroll_id)
+
+        return documents
 
     def __init__(self, namespace, global_config, embedding_func, workspace=None):
         super().__init__(
@@ -540,8 +666,7 @@ class ElasticsearchDocStatusStorage(DocStatusStorage):
             )
             
             existing_ids = {
-                doc["_id"] for doc in result["docs"]
-                if doc.get("found") and doc["_source"].get("status") == DocStatus.COMPLETED.value
+                doc["_id"] for doc in result["docs"] if doc.get("found")
             }
             
             return keys - existing_ids
@@ -572,25 +697,24 @@ class ElasticsearchDocStatusStorage(DocStatusStorage):
             logger.error(f"Error getting document status by IDs: {e}")
             return [None] * len(ids)
 
-    async def upsert(self, data: dict[str, DocProcessingStatus]) -> None:
+    async def get_by_id(self, id: str) -> dict[str, Any] | None:
+        try:
+            result = await self.es_client.get(index=self._index_name, id=id)
+            return self._prepare_doc_status_data(result.get("_source", {}))
+        except NotFoundError:
+            return None
+        except Exception as e:
+            logger.error(f"Error getting document status by ID {id}: {e}")
+            return None
+
+    async def upsert(self, data: dict[str, DocProcessingStatus | dict[str, Any]]) -> None:
         if not data:
             return
 
-        current_time = int(time.time())
         actions = []
         
         for k, v in data.items():
-            doc = {
-                "file_path": v.file_path,
-                "status": v.status.value,
-                "metadata": v.metadata or {},
-                "error_msg": v.error_msg,
-                "accreditation_level": getattr(v, "accreditation_level", 0),
-                "service": getattr(v, "service", None),
-                "update_time": current_time,
-                "create_time": current_time,
-            }
-            
+            doc = self._normalize_doc_status_input(v)
             actions.append({
                 "_op_type": "index",
                 "_index": self._index_name,
@@ -606,34 +730,166 @@ class ElasticsearchDocStatusStorage(DocStatusStorage):
                 logger.error(f"Error upserting doc status: {e}")
 
     async def get_all(self) -> dict[str, DocProcessingStatus]:
-        result = {}
-        
+        result: dict[str, DocProcessingStatus] = {}
+
+        hits = await self._scroll_hits({"match_all": {}})
+        for hit in hits:
+            doc_status = self._build_processing_status(hit.get("_source", {}))
+            if doc_status is not None:
+                result[hit.get("_id", "")] = doc_status
+
+        return result
+
+    async def delete(self, doc_ids: list[str]) -> None:
+        if not doc_ids:
+            return
+
+        try:
+            actions = [
+                {
+                    "_op_type": "delete",
+                    "_index": self._index_name,
+                    "_id": doc_id,
+                }
+                for doc_id in doc_ids
+            ]
+
+            await helpers.async_bulk(
+                self.es_client, actions, raise_on_error=False
+            )
+            logger.info(
+                f"[{self.workspace}] Deleted {len(doc_ids)} doc status records from {self._index_name}"
+            )
+        except Exception as exc:
+            logger.error(f"[{self.workspace}] Error deleting doc statuses: {exc}")
+
+    async def get_status_counts(self) -> dict[str, int]:
+        counts = {status.value: 0 for status in DocStatus}
+
         try:
             response = await self.es_client.search(
                 index=self._index_name,
-                body={"query": {"match_all": {}}},
-                scroll="2m",
-                size=1000
+                size=0,
+                aggs={
+                    "status_counts": {
+                        "terms": {
+                            "field": "status",
+                            "size": len(DocStatus),
+                        }
+                    }
+                },
             )
-            
-            scroll_id = response["_scroll_id"]
-            hits = response["hits"]["hits"]
-            
-            while hits:
-                for hit in hits:
-                    data = self._prepare_doc_status_data(hit["_source"])
-                    result[hit["_id"]] = DocProcessingStatus(**data)
-                
-                response = await self.es_client.scroll(scroll_id=scroll_id, scroll="2m")
-                scroll_id = response["_scroll_id"]
-                hits = response["hits"]["hits"]
-            
-            await self.es_client.clear_scroll(scroll_id=scroll_id)
-            
-        except Exception as e:
-            logger.error(f"Error getting all doc statuses: {e}")
-        
+
+            buckets = (
+                response.get("aggregations", {})
+                .get("status_counts", {})
+                .get("buckets", [])
+            )
+            for bucket in buckets:
+                key = bucket.get("key")
+                if key in counts:
+                    counts[key] = bucket.get("doc_count", 0)
+        except Exception as exc:
+            logger.error(f"[{self.workspace}] Error getting status counts: {exc}")
+
+        return counts
+
+    async def get_docs_by_status(
+        self, status: DocStatus
+    ) -> dict[str, DocProcessingStatus]:
+        query = {"term": {"status": status.value}}
+        result: dict[str, DocProcessingStatus] = {}
+
+        hits = await self._scroll_hits(query)
+        for hit in hits:
+            doc_status = self._build_processing_status(hit.get("_source", {}))
+            if doc_status is not None:
+                result[hit.get("_id", "")] = doc_status
+
         return result
+
+    async def get_docs_by_track_id(
+        self, track_id: str
+    ) -> dict[str, DocProcessingStatus]:
+        query = {"term": {"track_id": track_id}}
+        result: dict[str, DocProcessingStatus] = {}
+
+        hits = await self._scroll_hits(query)
+        for hit in hits:
+            doc_status = self._build_processing_status(hit.get("_source", {}))
+            if doc_status is not None:
+                result[hit.get("_id", "")] = doc_status
+
+        return result
+
+    async def get_docs_paginated(
+        self,
+        status_filter: DocStatus | None = None,
+        page: int = 1,
+        page_size: int = 50,
+        sort_field: str = "updated_at",
+        sort_direction: str = "desc",
+    ) -> tuple[list[tuple[str, DocProcessingStatus]], int]:
+        page = max(1, page)
+        page_size = max(10, min(200, page_size))
+        sort_field = sort_field if sort_field in {"created_at", "updated_at", "id"} else "updated_at"
+        reverse_sort = sort_direction.lower() == "desc"
+
+        query: dict[str, Any] = {"match_all": {}}
+        if status_filter is not None:
+            query = {"term": {"status": status_filter.value}}
+
+        docs_with_sort: list[tuple[str, DocProcessingStatus, Any]] = []
+        hits = await self._scroll_hits(query)
+
+        for hit in hits:
+            doc_status = self._build_processing_status(hit.get("_source", {}))
+            if doc_status is None:
+                continue
+
+            doc_id = hit.get("_id", "")
+            if sort_field == "id":
+                sort_key = doc_id
+            else:
+                sort_key = getattr(doc_status, sort_field, "")
+
+            docs_with_sort.append((doc_id, doc_status, sort_key))
+
+        docs_with_sort.sort(key=lambda item: item[2] or "", reverse=reverse_sort)
+
+        total_count = len(docs_with_sort)
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+
+        paginated = [
+            (doc_id, doc_status)
+            for doc_id, doc_status, _ in docs_with_sort[start_idx:end_idx]
+        ]
+
+        return paginated, total_count
+
+    async def get_all_status_counts(self) -> dict[str, int]:
+        counts = await self.get_status_counts()
+        counts["all"] = sum(counts.values())
+        return counts
+
+    async def get_doc_by_file_path(self, file_path: str) -> Union[dict[str, Any], None]:
+        try:
+            response = await self.es_client.search(
+                index=self._index_name,
+                size=1,
+                query={"term": {"file_path": file_path}},
+            )
+
+            hits = response.get("hits", {}).get("hits", [])
+            if hits:
+                return self._prepare_doc_status_data(hits[0].get("_source", {}))
+        except Exception as exc:
+            logger.error(
+                f"[{self.workspace}] Error getting doc status by file path {file_path}: {exc}"
+            )
+
+        return None
 
     async def index_done_callback(self) -> None:
         try:

@@ -10,8 +10,6 @@ pipmaster
 pydantic
 pypinyin
 python-dotenv
-raganything>=1.2.8
-requests>=2.32.5
 setuptools
 tenacity
 tiktoken
